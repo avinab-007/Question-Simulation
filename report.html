@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><title>Quiz Report</title><style>body{font-family:Arial;max-width:1200px;margin:50px auto;padding:20px;background:#f5f5f5;}
+table{border-collapse:collapse;width:100%;margin-top:20px;}th,td{border:1px solid #ddd;padding:12px;text-align:left;}th{background:#4CAF50;color:white;}</style></head>
+<body>
+<h1>📊 Exam Report - Reading 44</h1>
+<h2>Score: {{ score }}/{{ total }} ({{ pct }})</h2>
+<table>
+<tr><th>Q#</th><th>Question</th><th>Your Answer</th><th>Correct</th><th>Result</th></tr>
+{% for item in report %}
+<tr><td>{{ item.q_num }}</td><td>{{ item.question }}</td><td>{{ item.your_ans }}</td><td>{{ item.correct }}</td><td>{{ item.result }}</td></tr>
+{% endfor %}
+</table>
+<a href="/">🔄 Take Again</a> | <a href="/history">📈 History</a>
+</body></html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CFA Reading 44 Quiz - 90 Minutes</title>
+    <meta http-equiv="refresh" content="90*60">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .header { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .timer { font-size: 2.5em; font-weight: bold; color: #d32f2f; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .progress { font-size: 1.2em; color: #333; }
+        .question-container { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .question { font-size: 1.3em; font-weight: 600; color: #1a1a1a; margin-bottom: 20px; line-height: 1.5; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option { padding: 20px; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: all 0.3s; font-size: 1.1em; }
+        .option:hover { border-color: #2196f3; background: #f5f9ff; transform: translateY(-2px); }
+        .option.selected { border-color: #4caf50; background: #e8f5e8; box-shadow: 0 5px 15px rgba(76,175,80,0.3); }
+        .nav-buttons { display: flex; gap: 15px; justify-content: space-between; margin-top: 30px; }
+        button { padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-prev { background: #757575; color: white; }
+        .btn-next { background: linear-gradient(45deg, #4caf50, #45a049); color: white; }
+        .btn-finish { background: linear-gradient(45deg, #ff9800, #f57c00); color: white; width: 100%; padding: 20px; font-size: 1.3em; }
+        .countdown-warning { animation: pulse 1s infinite; color: #ff5722; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="progress">Question <span id="current-q">1</span> of <span id="total-q">50</span></div>
+            <div class="timer" id="timer">90:00</div>
+            <div>Reading 44: Mortgages & MBS</div>
+        </div>
+        
+        <div id="question-container" class="question-container" style="display:none;">
+            <div id="question-text" class="question"></div>
+            <div class="options">
+                <div class="option" data-option="A" onclick="selectOption('A')"><span id="opt-a"></span></div>
+                <div class="option" data-option="B" onclick="selectOption('B')"><span id="opt-b"></span></div>
+                <div class="option" data-option="C" onclick="selectOption('C')"><span id="opt-c"></span></div>
+                <div class="option" data-option="D" onclick="selectOption('D')"><span id="opt-d"></span></div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-prev" onclick="prevQuestion()" id="prev-btn" style="display:none;">Previous</button>
+                <button class="btn-next" onclick="nextQuestion()" id="next-btn">Next</button>
+                <button class="btn-finish" onclick="finishQuiz()" id="finish-btn" style="display:none;">Finish Exam</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentQ = 0;
+    let timerId = null;
+    let timeLeft = 0;
+
+    function renderTimer() {
+        const t = Math.max(0, timeLeft);
+        const minutes = Math.floor(t / 60);
+        const seconds = t % 60;
+        const timerEl = document.getElementById("timer");
+        timerEl.textContent =
+            minutes.toString().padStart(2, "0") + ":" +
+            seconds.toString().padStart(2, "0");
+
+        if (timeLeft <= 0) {
+            // Time over -> finish
+            window.location.href = "/finish";
+            return;
+        }
+        timeLeft -= 1;
+        timerId = setTimeout(renderTimer, 1000);
+    }
+
+    function loadQuestion() {
+        fetch("/quiz_data")
+            .then(r => r.json())
+            .then(data => {
+                if (data.finished) {
+                    window.location.href = "/finish";
+                    return;
+                }
+
+                // Sync indexes
+                currentQ = data.current - 1;
+
+                // Question header
+                document.getElementById("current-q").textContent = data.current;
+                document.getElementById("total-q").textContent = data.total;
+
+                // Question stem
+                document.getElementById("question-text").textContent = data.question.question;
+
+                // Options
+                document.getElementById("opt-a").textContent = "A) " + data.question.a;
+                document.getElementById("opt-b").textContent = "B) " + data.question.b;
+                document.getElementById("opt-c").textContent = "C) " + data.question.c;
+                document.getElementById("opt-d").textContent = "D) " + data.question.d;
+
+                // Clear selection and re‑select if previously answered
+                document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+                if (data.user_answer) {
+                    const el = document.querySelector(`[data-option="${data.user_answer}"]`);
+                    if (el) el.classList.add("selected");
+                }
+
+                // Reset timer from server
+                timeLeft = data.time_left;
+                if (timerId) clearTimeout(timerId);
+                renderTimer();
+            })
+            .catch(err => {
+                console.error("quiz_data error:", err);
+            });
+    }
+
+    function selectOption(option) {
+        // Highlight
+        document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+        const el = document.querySelector(`[data-option="${option}"]`);
+        if (el) el.classList.add("selected");
+
+        // Send answer, then load next question
+        fetch("/submit_answer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ q_idx: currentQ, answer: option })
+        })
+        .then(r => r.json())
+        .then(() => {
+            loadQuestion();
+        })
+        .catch(err => {
+            console.error("submit_answer error:", err);
+        });
+    }
+
+    function finishQuiz() {
+        if (confirm("Finish exam now?")) {
+            window.location.href = "/finish";
+        }
+    }
+
+    // Initial call when page loads
+    document.addEventListener("DOMContentLoaded", function () {
+        loadQuestion();
+    });
+</script>
+
+</body>
+</html>

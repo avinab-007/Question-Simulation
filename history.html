@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><title>Score History</title><style>body{font-family:Arial;max-width:800px;margin:50px auto;padding:20px;background:#f5f5f5;}
+table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ddd;padding:12px;text-align:center;}th{background:#2196F3;color:white;}</style></head>
+<body>
+<h1>📈 Quiz Score History</h1>
+{% if history %}
+<table>
+<tr><th>Date</th><th>Score</th><th>Percentage</th></tr>
+{% for row in history %}
+<tr><td>{{ row.date }}</td><td>{{ row.score }}/{{ row.total }}</td><td>{{ row.pct }}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No quiz attempts yet. <a href="/">Start now!</a></p>
+{% endif %}
+<a href="/">🏠 Home</a>
+</body></html>
